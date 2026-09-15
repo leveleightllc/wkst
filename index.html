@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WKST">
+<title>WKST 13</title>
+<style>
+  :root { --g:#33ff66; --dim:#1f8c3d; --amber:#ffb833; --panel:#051208; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+  html,body { margin:0; height:100%; background:#000; color:var(--g); font-family:Menlo,"Courier New",monospace; overflow:hidden; }
+  body::after { content:""; position:fixed; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1.5px, transparent 1.5px 4px); }
+  body::before { content:""; position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.6) 100%); }
+  #app { height:100%; display:flex; flex-direction:column; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); animation:flick 3.1s infinite; }
+  @keyframes flick { 0%,100%{opacity:1} 37%{opacity:.96} 61%{opacity:.985} 82%{opacity:.95} }
+  .hidden { display:none !important; }
+  /* boot */
+  #boot { position:fixed; inset:0; display:flex; flex-direction:column; }
+  .bars { flex:0 0 62%; display:flex; } .bars div { flex:1; opacity:.85; }
+  .bars2 { flex:0 0 10%; display:flex; } .bars2 div { flex:1; opacity:.85; }
+  .grey { flex:1; display:flex; } .grey div { flex:1; }
+  #standby { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,.88); color:#fff; text-align:center; padding:28px 36px; }
+  #standby h1 { margin:0 0 12px; font-size:clamp(26px,5vw,44px); letter-spacing:.06em; }
+  #standby p { margin:4px 0; opacity:.8; font-size:clamp(12px,2vw,20px); }
+  #power { position:absolute; left:50%; bottom:60px; transform:translateX(-50%); background:var(--g); color:#000; border:0; font:inherit; font-weight:bold; font-size:26px; padding:18px 40px; border-radius:6px; }
+  /* receiver */
+  header { display:flex; align-items:baseline; gap:14px; padding:22px 28px 10px; }
+  header .call { font-size:30px; font-weight:bold; }
+  header .onair { font-size:16px; color:#ff3b3b; }
+  header .onair.off { color:var(--dim); }
+  header .clock { margin-left:auto; text-align:right; }
+  header .clock small { display:block; font-size:12px; color:var(--dim); }
+  header .clock b { font-size:30px; }
+  header .clock b.low { color:var(--amber); }
+  main { flex:1; display:flex; gap:24px; padding:0 28px 20px; min-height:0; }
+  #screen { flex:1; display:flex; flex-direction:column; gap:14px; padding:22px; background:var(--panel); border:2px solid var(--dim); border-radius:10px; min-height:0; }
+  #screen .meta { font-size:14px; color:var(--dim); }
+  #lines { flex:1; overflow:auto; font-size:clamp(18px,2.6vw,26px); font-weight:600; line-height:1.4; }
+  #lines p { margin:0 0 12px; }
+  #notice { color:var(--amber); font-weight:600; font-size:16px; min-height:1.4em; }
+  #controls { width:360px; display:flex; flex-direction:column; gap:14px; }
+  #entry { display:flex; align-items:center; gap:6px; padding:10px 16px; background:var(--panel); border:2px solid var(--dim); border-radius:8px; font-size:34px; font-weight:bold; }
+  #entry .lab { font-size:14px; color:var(--dim); font-weight:normal; margin-right:auto; }
+  #entry.idle { opacity:.35; }
+  #pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  #pad.letters { grid-template-columns:repeat(4,1fr); }
+  #pad button, .small { font:inherit; font-weight:bold; color:var(--g); background:var(--panel); border:2px solid var(--dim); border-radius:8px; }
+  #pad button { font-size:30px; height:62px; }
+  #pad button.go { background:var(--g); color:#000; }
+  #pad.idle { opacity:.4; pointer-events:none; }
+  .row { display:flex; gap:12px; }
+  .small { flex:1; height:44px; font-size:13px; }
+  .small:disabled { opacity:.4; }
+  #found { display:none; font:inherit; font-weight:bold; font-size:28px; height:120px; background:var(--g); color:#000; border:0; border-radius:8px; }
+  #goodnight { display:none; text-align:center; color:var(--dim); font-size:18px; padding:30px 0; font-weight:bold; }
+  #gmdoor { position:fixed; top:0; right:0; width:90px; height:90px; }
+  /* GM */
+  #gm { position:fixed; inset:0; background:#111; color:#eee; font-family:-apple-system,system-ui,sans-serif; overflow:auto; padding:20px; }
+  #gm h2 { margin:0 0 10px; } #gm h3 { margin:18px 0 6px; font-size:14px; text-transform:uppercase; color:#999; }
+  #gm button { display:block; width:100%; text-align:left; font:inherit; font-size:16px; padding:12px; margin:6px 0; background:#222; color:#fff; border:1px solid #444; border-radius:8px; }
+  #gm button.danger { color:#ff6b6b; }
+  #gm .done { position:sticky; top:0; background:#0a84ff; color:#fff; text-align:center; border:0; }
+  #hint { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#1c1c1e; color:#fff; font-family:-apple-system,system-ui,sans-serif; padding:22px 26px; border-radius:14px; width:min(90vw,420px); text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.6); }
+  #hint h3 { margin:0 0 10px; } #hint p { margin:0 0 16px; line-height:1.4; } #hint button { font:inherit; font-size:17px; padding:10px 24px; border:0; border-radius:10px; background:#0a84ff; color:#fff; }
+  @media (max-width: 820px), (orientation: portrait) {
+    main { flex-direction:column; }
+    #controls { width:auto; }
+    #lines { font-size:20px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="boot">
+    <div class="bars"><div style="background:#bfbfbf"></div><div style="background:#bfbf00"></div><div style="background:#00bfbf"></div><div style="background:#00bf00"></div><div style="background:#bf00bf"></div><div style="background:#bf0000"></div><div style="background:#0000bf"></div></div>
+    <div class="bars2"><div style="background:#0000bf"></div><div style="background:#000"></div><div style="background:#bf00bf"></div><div style="background:#000"></div><div style="background:#00bfbf"></div><div style="background:#000"></div><div style="background:#bfbfbf"></div></div>
+    <div class="grey"><div style="background:#0d0d0d"></div><div style="background:#262626"></div><div style="background:#404040"></div><div style="background:#595959"></div><div style="background:#808080"></div></div>
+    <div id="standby"><h1>PLEASE STAND BY</h1><p>WKST &nbsp;·&nbsp; CHANNEL 13</p><p>OFF THE AIR SINCE OCTOBER 31, 1987</p></div>
+    <button id="power">⏻&nbsp; POWER</button>
+  </div>
+  <header class="hidden" id="hdr">
+    <span class="call">WKST 13</span><span class="onair" id="onair">● ON AIR</span>
+    <div class="clock"><small>SIGN-OFF IN</small><b id="clock">60:00</b></div>
+  </header>
+  <main class="hidden" id="main">
+    <section id="screen"><div class="meta" id="meta">INCOMING</div><div id="lines"></div><div id="notice"></div></section>
+    <section id="controls">
+      <div id="entry" class="idle"><span class="lab" id="entrylab">FREQ</span><span id="slots"></span></div>
+      <div id="pad" class="idle"></div>
+      <button id="found">WE FOUND IT</button>
+      <div id="goodnight">GOOD NIGHT, OPERATORS</div>
+      <div class="row"><button class="small" id="replay">REPLAY</button><button class="small" id="call">CALL MISSION CONTROL (3)</button></div>
+    </section>
+  </main>
+  <div id="gmdoor"></div>
+</div>
+<div id="gm" class="hidden"></div>
+<div id="hint" class="hidden"><h3>MISSION CONTROL</h3><p id="hinttext"></p><button id="hintok">COPY THAT</button></div>
+<script id="content" type="application/json">{"station": "WKST", "channel": "13", "offAir": "October 31, 1987", "kids": {"lead": "Ian", "spotter": "Bryn", "spotterAge": 5}, "boot": {"lines": ["This is WKST. Channel thirteen.", "We went off the air on October thirty-first, nineteen eighty-seven.", "Last night, at three thirteen in the morning, we came back on.", "Nobody is at the station.", "I am broadcasting to one house. Yours.", "I have something of yours.", "To get it back, find my eleven frequencies.", "The first one is on the paper in front of you."]}, "stages": [{"n": 1, "freq": "881", "title": "The cold key", "card": "CASE FILE", "envelope": "Envelope 1", "lines": ["Eighty-eight point one. Good. You can hear me.", "I put the first key where it is coldest.", "Where the ice cream sleeps.", "You will need something warm to get it out.", "The next frequency is behind the lock."], "cardText": ["I put the first key where it is coldest.", "Where the ice cream sleeps.", "You will need something warm to get it out."], "await": "freq", "hint": "Where does the ice cream live? And what melts ice?"}, {"n": 2, "freq": "903", "title": "The empty page", "card": "CLUE 2", "envelope": "supply pouch", "lines": ["Ninety point three.", "That page is not empty.", "I do not write in ink you can see.", "There is a light on the pen."], "cardText": ["This page looks empty.", "I do not write in ink you can see."], "await": "freq", "hint": "What is on the cap of that pen? Shine it on the page."}, {"n": 3, "freq": "917", "title": "The torn picture", "card": "CLUE 3", "envelope": "two bags under the couch", "lines": ["Ninety-one point seven.", "I tore the picture. Match the shapes to put it back.", "Then count. I always count. Every one.", "Enter the four numbers here."], "cardText": ["I tore the picture. Match the shapes to put it back together.", "Then count. I always count. Every one."], "await": "code", "answer": "3142", "keys": "digits", "success": ["Correct.", "The lock on the bag will open now.", "The next frequency is inside."], "hint": "Which box says first? How many apples are in it?"}, {"n": 4, "freq": "925", "title": "The picture", "card": "CLUE 4", "envelope": "inside the backpack", "lines": ["Ninety-two point five.", "I drew you a picture.", "Finish it, and you will know where I went."], "cardText": ["I drew you a picture.", "Finish it, and you will know where I went."], "await": "freq", "hint": "What has a faucet and feet?"}, {"n": 5, "freq": "941", "title": "The way I see", "card": "CLUE 5", "envelope": "bathroom counter", "lines": ["Ninety-four point one.", "I write the way I see.", "Find the thing in that room that sees the way I do."], "cardText": ["I write the way I see.", "Find the thing in this room that sees the way I do."], "await": "freq", "hint": "The writing is backwards. What in that room flips things around?"}, {"n": 6, "freq": "958", "title": "My mistakes", "card": "CLUE 6", "envelope": "Envelope 2, under the kitchen table", "lines": ["Ninety-five point eight.", "I copied four pictures from the station wall.", "I am not good at it.", "Count my mistakes. Enter the four numbers."], "cardText": ["I copied four pictures from the station wall. I am not good at it.", "Count my mistakes."], "await": "code", "answer": "2314", "keys": "digits", "success": ["Correct.", "Open the second bag."], "hint": "Look at the third picture in row one. Is it the same on top and bottom?"}, {"n": 7, "freq": "966", "title": "The word", "card": "CLUE 7", "envelope": "inside bag B", "lines": ["Ninety-six point six.", "The operator with the envelope knows a word.", "Prove you know it too. Enter the word."], "cardText": ["The operator with the envelope knows a word.", "Prove you know it too."], "await": "code", "answer": "TREAT", "keys": "letters", "success": ["Correct.", "Now say it to her. Out loud.", "She is listening."], "hint": "What sound does tiger start with? Write that letter first."}, {"n": 8, "freq": "979", "title": "Five keys", "card": "CLUE 8", "envelope": "Envelope 3, from Operator R", "lines": ["Ninety-seven point nine.", "Five keys. Four are mine. One is yours.", "Follow the pattern."], "cardText": ["Five keys. Four are mine. One is yours.", "Follow the pattern."], "await": "freq", "hint": "Say the shapes out loud. Star, circle, triangle, star, circle, triangle, star, circle..."}, {"n": 9, "freq": "985", "title": "The wire room", "card": "CLUE 9", "envelope": "inside the wire-room door", "lines": ["Ninety-eight point five.", "The red wires are live.", "Touch one, and I will know you are here.", "Cross quietly.", "My balloons are waiting at the end. They remember everything."], "cardText": ["The red wires are live. Touch one, and I will know you are here.", "Cross quietly.", "My balloons are waiting at the end. They remember everything."], "await": "freq", "hint": "No hint for this one. Go slowly. Try again if you touch."}, {"n": 10, "freq": "991", "title": "Things I know", "card": "CLUE 10", "envelope": "inside the balloons", "lines": ["Ninety-nine point one.", "I know things about you.", "I know how old Bryn is.", "I know how many legs a dog has.", "I know how many wheels are on a bicycle.", "Prove you know them too. Enter the three numbers."], "cardText": ["I know things about you. Prove you know them too.", "How old is Bryn?", "How many legs does a dog have?", "How many wheels does a bicycle have?"], "await": "code", "answer": "542", "keys": "digits", "success": ["Correct.", "The vault will open now.", "Go and look."], "hint": "How old are you, Bryn? Count the legs on a stuffed animal."}, {"n": 11, "freq": "999", "title": "My face", "card": "CLUE 11", "envelope": "inside the vault", "lines": ["Ninety-nine point nine. The last one.", "You found the vault. It is empty.", "I moved everything before you came.", "I wrote down where. Not in ink you can see.", "Take the light.", "Look at my face. On the wall."], "cardText": ["You found the vault. It is empty.", "I moved everything before you came.", "I wrote down where, but not in ink you can see.", "Take the light. Look at my face. On the wall."], "await": "found", "hint": "Whose face is on the wall? Turn the lights down and shine the light closer."}], "signoff": {"lines": ["You found it.", "You found all eleven.", "Nobody has ever found all eleven.", "This is WKST. Channel thirteen. Signing off.", "Good night, Operators.", "I will be counting the days."]}, "hintsTotal": 3, "minutes": 60}</script>
+<script>
+const C = JSON.parse(document.getElementById('content').textContent);
+const $ = id => document.getElementById(id);
+const KEY = 'wkst.state.v1';
+let S = { phase:'off', current:0, input:'none', hints:C.hintsTotal, deadline:null };
+let entry = '', lines = [], typed = 0, typeTimer = null, speaking = false, muted = false;
+
+/* ---------- audio ---------- */
+let ctx = null, humNode = null;
+function ac() { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+function noiseBuffer(sec, lp) { const a = ac(); const b = a.createBuffer(1, a.sampleRate * sec, a.sampleRate); const d = b.getChannelData(0); let p = 0; for (let i = 0; i < d.length; i++) { const x = Math.random() * 2 - 1; p = lp * p + (1 - lp) * x; d[i] = p; } return b; }
+function playStatic(vol = 0.5, sec = 1.6) { if (muted) return; const a = ac(); const s = a.createBufferSource(); s.buffer = noiseBuffer(sec, 0.6); const g = a.createGain(); g.gain.setValueAtTime(0, a.currentTime); g.gain.linearRampToValueAtTime(vol, a.currentTime + 0.05); g.gain.setValueAtTime(vol, a.currentTime + sec - 0.4); g.gain.linearRampToValueAtTime(0, a.currentTime + sec); s.connect(g).connect(a.destination); s.start(); }
+function tone(f, dur, vol = 0.3, type = 'sine', t0 = 0) { if (muted) return; const a = ac(); const o = a.createOscillator(); o.type = type; o.frequency.value = f; const g = a.createGain(); const t = a.currentTime + t0; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.setValueAtTime(vol, t + dur - 0.08); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur); }
+function playTune() { if (muted) return; const a = ac(); const o = a.createOscillator(); const g = a.createGain(); o.frequency.setValueAtTime(300, a.currentTime); o.frequency.linearRampToValueAtTime(1700, a.currentTime + 0.6); g.gain.value = 0.25; g.gain.linearRampToValueAtTime(0, a.currentTime + 0.7); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + 0.7); playStatic(0.15, 0.7); }
+function playUnlock() { tone(660, 0.18, 0.35); tone(990, 0.35, 0.35, 'sine', 0.18); }
+function playWrong() { tone(110, 0.4, 0.25, 'square'); }
+function playClick() { if (muted) return; const a = ac(); const s = a.createBufferSource(); s.buffer = noiseBuffer(0.05, 0); const g = a.createGain(); g.gain.value = 0.3; s.connect(g).connect(a.destination); s.start(); }
+function startHum() { if (muted || humNode) return; const a = ac(); const o1 = a.createOscillator(); o1.frequency.value = 60; const o2 = a.createOscillator(); o2.frequency.value = 120; const n = a.createBufferSource(); n.buffer = noiseBuffer(4, 0.9); n.loop = true; const g = a.createGain(); g.gain.value = 0.06; const g2 = a.createGain(); g2.gain.value = 0.02; o1.connect(g); o2.connect(g2); n.connect(g2); g.connect(a.destination); g2.connect(a.destination); o1.start(); o2.start(); n.start(); humNode = { stop() { o1.stop(); o2.stop(); n.stop(); } }; }
+function stopHum() { if (humNode) { try { humNode.stop(); } catch (e) {} humNode = null; } }
+
+/* ---------- speech ---------- */
+const synth = window.speechSynthesis;
+let voice = null;
+function pickVoice() { const vs = synth ? synth.getVoices() : []; voice = vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Alex|Daniel|Aaron|Fred/i.test(v.name)) || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null; }
+if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; }
+let sayToken = 0;
+function say(arr, asSignal, then) {
+  stopSpeaking(); const my = ++sayToken;
+  if (muted || !synth) { then && then(); return; }
+  speaking = true; render();
+  let i = 0;
+  const next = () => {
+    if (my !== sayToken) return;
+    if (i >= arr.length) { speaking = false; render(); then && then(); return; }
+    const u = new SpeechSynthesisUtterance(arr[i++]);
+    if (voice) u.voice = voice;
+    u.rate = asSignal ? 0.62 : 0.95; u.pitch = asSignal ? 0.45 : 1; u.volume = 1;
+    u.onend = () => setTimeout(next, asSignal ? 550 : 200);
+    u.onerror = () => setTimeout(next, 100);
+    synth.speak(u);
+  };
+  next();
+}
+function stopSpeaking() { sayToken++; if (synth) synth.cancel(); speaking = false; }
+
+/* ---------- game ---------- */
+const stage = () => S.current >= 1 ? C.stages[S.current - 1] : null;
+const nextStage = () => S.current < C.stages.length ? C.stages[S.current] : null;
+const pretty = f => f.slice(0, 2) + '.' + f.slice(2);
+const limit = () => (S.input === 'code' && stage() && stage().answer) ? stage().answer.length : 3;
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+let notice = '';
+
+function transmit(arr, then) {
+  if (typeTimer) clearInterval(typeTimer);
+  lines = arr; typed = 0;
+  const total = arr.reduce((n, l) => n + l.length + 1, 0);
+  typeTimer = setInterval(() => { typed++; if (typed >= total) clearInterval(typeTimer); render(); }, 45);
+  say(arr, true, () => { typed = 1e9; render(); then && then(); });
+}
+function afterTransmission(s) {
+  if (s.await === 'code') { S.input = 'code'; notice = s.keys === 'letters' ? 'ENTER THE WORD' : 'ENTER THE CODE'; }
+  else if (s.await === 'found') { S.input = 'found'; notice = 'WHEN YOU HAVE IT, PRESS THE BUTTON'; }
+  else { S.input = 'freq'; notice = 'ENTER THE NEXT FREQUENCY'; }
+  save(); render();
+}
+function powerOn() {
+  ac(); S.phase = 'booting'; S.deadline = Date.now() + C.minutes * 60000; save();
+  playStatic(0.5, 2); startHum(); render();
+  setTimeout(() => { S.phase = 'receiving'; save(); render(); transmit(C.boot.lines, () => { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; save(); render(); }); }, 2200);
+}
+function press(k) {
+  if (!(S.input === 'freq' || S.input === 'code')) return;
+  playClick();
+  if (k === '⌫') { entry = entry.slice(0, -1); render(); return; }
+  if (k === 'GO') { submit(); return; }
+  if (entry.length >= limit()) return;
+  entry += k; render();
+  if (entry.length === limit()) submit();
+}
+function submit() { const e = entry; entry = ''; if (S.input === 'freq') tune(e); else if (S.input === 'code') check(e); render(); }
+function tune(f) {
+  const n = nextStage();
+  if (n && n.freq === f) {
+    S.current = n.n; S.input = 'none'; notice = 'TUNING ' + pretty(f) + '…'; playTune(); save(); render();
+    setTimeout(() => { playStatic(0.3, 1.2); transmit(n.lines, () => afterTransmission(n)); }, 900);
+  } else {
+    const old = C.stages.find(s => s.freq === f && s.n <= S.current);
+    if (old) { playTune(); S.input = 'none'; notice = 'REPLAYING ' + pretty(f); render(); transmit(old.lines, () => { if (old.n === S.current) afterTransmission(old); else { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; render(); } }); }
+    else { playWrong(); notice = 'NO SIGNAL ON ' + pretty(f); }
+  }
+}
+function check(code) {
+  const s = stage(); if (!s || !s.answer) return;
+  if (code.toUpperCase() === s.answer.toUpperCase()) { playUnlock(); S.input = 'none'; notice = 'ACCEPTED'; render(); transmit(s.success || ['Correct.'], () => { S.input = 'freq'; notice = 'ENTER THE NEXT FREQUENCY'; save(); render(); }); }
+  else { playWrong(); notice = 'THAT IS NOT IT'; }
+}
+function found() { if (S.input !== 'found') return; S.input = 'none'; playUnlock(); S.phase = 'signoff'; save(); render(); transmit(C.signoff.lines, () => { stopHum(); notice = 'OFF AIR'; save(); render(); }); }
+function callMC() {
+  if (S.hints <= 0) return; S.hints--; const s = stage();
+  const t = s ? s.hint : 'Read the paper in the envelope. The frequency is printed on it.';
+  $('hinttext').textContent = t; $('hint').classList.remove('hidden');
+  say(['Mission Control here.', t], false); save(); render();
+}
+function replay() { if (S.phase === 'receiving' && S.current === 0) { transmit(C.boot.lines); return; } const s = stage(); if (s) transmit(s.lines); }
+
+/* ---------- GM ---------- */
+function gmJump(n) { stopSpeaking(); if (typeTimer) clearInterval(typeTimer); S.current = Math.max(0, n - 1); S.phase = 'receiving'; S.input = 'freq'; entry = ''; lines = ['MISSION CONTROL OVERRIDE', 'WAITING FOR ' + pretty(C.stages[n - 1].freq)]; typed = 1e9; notice = 'ENTER A FREQUENCY'; if (!S.deadline) S.deadline = Date.now() + C.minutes * 60000; startHum(); save(); closeGM(); }
+function gmReset() { stopSpeaking(); stopHum(); if (typeTimer) clearInterval(typeTimer); S = { phase:'off', current:0, input:'none', hints:C.hintsTotal, deadline:null }; entry = ''; lines = []; typed = 0; notice = ''; try { localStorage.removeItem(KEY); } catch (e) {} closeGM(); }
+function openGM() {
+  const s = stage(), n = nextStage();
+  let h = '<button class="done" id="gmdone">Done</button><h2>Mission Control</h2><h3>Where the game is</h3>';
+  h += '<p>' + (s ? 'Received: ' + s.n + '. ' + s.title + ' (' + pretty(s.freq) + ')' : (S.phase === 'off' ? 'Not started' : 'Boot message; waiting for the first frequency')) + '</p>';
+  if (n) h += '<p>Next frequency expected: ' + pretty(n.freq) + ' (clue ' + n.n + ')</p>';
+  h += '<p>Hints left: ' + S.hints + ' · Time left: ' + clockText() + '</p><h3>Jump to a clue (the next frequency expected)</h3>';
+  C.stages.forEach(st => { h += '<button data-jump="' + st.n + '">' + st.n + '. ' + st.title + ' — ' + pretty(st.freq) + (st.answer ? '  · code ' + st.answer : '') + '</button>'; });
+  h += '<h3>Fixes</h3><button id="gmskip">Skip the current code</button><button id="gmadd">Add 10 minutes</button><button id="gmhint">Give back a hint call</button><button id="gmmute">' + (muted ? 'Unmute sound' : 'Mute all sound') + '</button><button id="gmreplay">Replay current transmission</button>';
+  h += '<h3>Danger</h3><button class="danger" id="gmreset">Reset the whole game</button>';
+  $('gm').innerHTML = h; $('gm').classList.remove('hidden');
+  $('gmdone').onclick = closeGM;
+  document.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => gmJump(+b.dataset.jump));
+  $('gmskip').onclick = () => { const st = stage(); if (S.input === 'code' && st) { check(st.answer); } closeGM(); };
+  $('gmadd').onclick = () => { S.deadline = (S.deadline || Date.now()) + 600000; save(); render(); closeGM(); };
+  $('gmhint').onclick = () => { S.hints = Math.min(C.hintsTotal, S.hints + 1); save(); render(); closeGM(); };
+  $('gmmute').onclick = () => { muted = !muted; if (muted) { stopSpeaking(); stopHum(); } else startHum(); closeGM(); };
+  $('gmreplay').onclick = () => { replay(); closeGM(); };
+  $('gmreset').onclick = () => { if (confirm('Reset the whole game?')) gmReset(); };
+}
+function closeGM() { $('gm').classList.add('hidden'); render(); }
+
+/* ---------- render ---------- */
+function clockText() { const t = Math.max(0, Math.round(((S.deadline || Date.now()) - Date.now()) / 1000)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+function render() {
+  const on = S.phase === 'receiving' || S.phase === 'signoff';
+  $('boot').classList.toggle('hidden', S.phase !== 'off');
+  $('hdr').classList.toggle('hidden', !on); $('main').classList.toggle('hidden', !on);
+  if (S.phase === 'booting') { document.body.style.background = '#888'; } else document.body.style.background = '#000';
+  if (!on) return;
+  $('onair').textContent = S.phase === 'signoff' ? 'OFF AIR' : '● ON AIR'; $('onair').classList.toggle('off', S.phase === 'signoff');
+  const s = stage();
+  $('meta').textContent = S.phase === 'signoff' ? 'FINAL TRANSMISSION' : (s ? 'FREQ ' + pretty(s.freq) + '  ·  ' + s.n + ' OF ' + C.stages.length : 'INCOMING');
+  let left = typed, html = '';
+  for (const l of lines) { if (left <= 0) break; if (left >= l.length + 1) { html += '<p>' + esc(l) + '</p>'; left -= l.length + 1; } else { html += '<p>' + esc(l.slice(0, left)) + '</p>'; left = 0; } }
+  if (speaking) html += '<p>▮</p>';
+  $('lines').innerHTML = html; $('lines').scrollTop = 1e9;
+  $('notice').textContent = notice;
+  const active = S.input === 'freq' || S.input === 'code';
+  $('entry').classList.toggle('idle', !active); $('entrylab').textContent = S.input === 'code' ? 'CODE' : 'FREQ';
+  const lim = limit(); let slots = '';
+  for (let i = 0; i < lim; i++) { slots += (entry[i] || '_') + (S.input !== 'code' && i === 1 ? '.' : ' '); }
+  $('slots').textContent = slots.trim();
+  const letters = S.input === 'code' && s && s.keys === 'letters';
+  const keys = letters ? ['A','B','E','G','I','N','O','P','R','S','T','⌫'] : ['1','2','3','4','5','6','7','8','9','⌫','0','GO'];
+  $('pad').className = (letters ? 'letters' : '') + (active ? '' : ' idle');
+  $('pad').innerHTML = keys.map(k => '<button class="' + (k === 'GO' ? 'go' : '') + '" data-k="' + k + '">' + k + '</button>').join('');
+  $('pad').style.display = (S.input === 'found' || S.phase === 'signoff') ? 'none' : 'grid';
+  $('found').style.display = S.input === 'found' ? 'block' : 'none';
+  $('goodnight').style.display = S.phase === 'signoff' ? 'block' : 'none';
+  $('call').textContent = S.hints > 0 ? 'CALL MISSION CONTROL (' + S.hints + ')' : 'NO CALLS LEFT'; $('call').disabled = S.hints === 0;
+}
+function esc(t) { return t.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c])); }
+setInterval(() => { if (S.phase === 'receiving' || S.phase === 'signoff') { const c = $('clock'); c.textContent = clockText(); c.classList.toggle('low', (S.deadline || 0) - Date.now() < 300000); } }, 1000);
+
+/* ---------- wire up ---------- */
+$('power').onclick = powerOn;
+$('pad').addEventListener('click', e => { const b = e.target.closest('button'); if (b) press(b.dataset.k); });
+$('found').onclick = found; $('replay').onclick = () => { ac(); replay(); }; $('call').onclick = () => { ac(); callMC(); };
+$('hintok').onclick = () => $('hint').classList.add('hidden');
+let holdT = null;
+const door = $('gmdoor');
+door.addEventListener('touchstart', () => { holdT = setTimeout(openGM, 2000); }, { passive: true });
+door.addEventListener('mousedown', () => { holdT = setTimeout(openGM, 2000); });
+['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(ev => door.addEventListener(ev, () => clearTimeout(holdT)));
+
+/* restore */
+try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved && saved.phase) { S = Object.assign(S, saved); if (S.phase === 'booting') S.phase = 'receiving';
+  if (S.phase === 'receiving') { const s = stage(); if (S.current === 0) { S.input = 'freq'; lines = C.boot.lines; } else if (s) { lines = s.lines; if (S.input === 'none') { S.input = s.await === 'code' ? 'code' : (s.await === 'found' ? 'found' : 'freq'); } } typed = 1e9; notice = S.input === 'code' ? 'ENTER THE CODE' : (S.input === 'found' ? 'WHEN YOU HAVE IT, PRESS THE BUTTON' : 'ENTER A FREQUENCY'); }
+  else if (S.phase === 'signoff') { lines = C.signoff.lines; typed = 1e9; notice = 'OFF AIR'; } } } catch (e) {}
+render();
+</script>
+</body>
+</html>
