@@ -26,6 +26,7 @@
   #standby { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,.88); color:#fff; text-align:center; padding:28px 36px; }
   #standby h1 { margin:0 0 12px; font-size:clamp(26px,5vw,44px); letter-spacing:.06em; }
   #standby p { margin:4px 0; opacity:.8; font-size:clamp(12px,2vw,20px); }
+  #ver { position:absolute; left:14px; bottom:10px; font-size:11px; color:rgba(255,255,255,.45); }
   #power { position:absolute; left:50%; bottom:60px; transform:translateX(-50%); background:var(--g); color:#000; border:0; font:inherit; font-weight:bold; font-size:26px; padding:18px 40px; border-radius:6px; }
   /* receiver */
   header { display:flex; align-items:baseline; gap:14px; padding:22px 28px 10px; }
@@ -81,6 +82,7 @@
     <div class="grey"><div style="background:#0d0d0d"></div><div style="background:#262626"></div><div style="background:#404040"></div><div style="background:#595959"></div><div style="background:#808080"></div></div>
     <div id="standby"><h1>PLEASE STAND BY</h1><p>WKST &nbsp;·&nbsp; CHANNEL 13</p><p>OFF THE AIR SINCE OCTOBER 31, 1987</p></div>
     <button id="power">⏻&nbsp; POWER</button>
+    <div id="ver">v3 · 16 Sep</div>
   </div>
   <header class="hidden" id="hdr">
     <span class="call">WKST 13</span><span class="onair" id="onair">● ON AIR</span>
@@ -122,18 +124,39 @@ function startHum() { if (muted || humNode) return; const a = ac(); const o1 = a
 function stopHum() { if (humNode) { try { humNode.stop(); } catch (e) {} humNode = null; } }
 
 /* ---------- speech ---------- */
+/* Pre-rendered voice clips (made on the Mac with the app's own effects chain) play first; the
+   browser's built-in speech is only the fallback if a clip is missing or fails to load. */
+const CLIPS = {}; let clipSrc = null;
+async function loadClip(key) {
+  if (CLIPS[key] !== undefined) return CLIPS[key];
+  try {
+    const r = await fetch('audio/' + key + '.m4a', { cache: 'force-cache' });
+    if (!r.ok) throw new Error(r.status);
+    const buf = await ac().decodeAudioData(await r.arrayBuffer());
+    CLIPS[key] = buf; return buf;
+  } catch (e) { CLIPS[key] = null; return null; }
+}
+function preload() { ['boot','s1','s2','s3','ok3','s4','hint0','hint1','hint2','hint3'].forEach(loadClip); }
 const synth = window.speechSynthesis;
 let voice = null;
 function pickVoice() { const vs = synth ? synth.getVoices() : []; voice = vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Alex|Daniel|Aaron|Fred/i.test(v.name)) || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null; }
 if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; }
 let sayToken = 0;
-/* The Signal: each sentence is split into phrases; most sit low and a little unsteady,
-   and every so often one drops into a much lower register. Mission Control is a plain voice. */
 function phrases(line) { return line.match(/[^,.;:?!]+[,.;:?!]*\s*/g) || [line]; }
-function say(arr, asSignal, then) {
+async function say(arr, asSignal, then, clipKey) {
   stopSpeaking(); const my = ++sayToken;
-  if (muted || !synth) { then && then(); return; }
+  if (muted) { then && then(); return; }
   speaking = true; render();
+  if (clipKey) {
+    const buf = await loadClip(clipKey);
+    if (my !== sayToken) return;
+    if (buf) {
+      const a = ac(); const src = a.createBufferSource(); src.buffer = buf; src.connect(a.destination);
+      src.onended = () => { if (my !== sayToken) return; clipSrc = null; speaking = false; render(); then && then(); };
+      clipSrc = src; src.start(); return;
+    }
+  }
+  if (!synth) { speaking = false; render(); then && then(); return; }
   const units = [];
   arr.forEach(line => {
     if (!asSignal) { units.push({ t: line, pitch: 1, rate: 0.95, gap: 200 }); return; }
@@ -160,7 +183,7 @@ function say(arr, asSignal, then) {
   };
   next();
 }
-function stopSpeaking() { sayToken++; if (synth) synth.cancel(); speaking = false; }
+function stopSpeaking() { sayToken++; if (clipSrc) { try { clipSrc.onended = null; clipSrc.stop(); } catch (e) {} clipSrc = null; } if (synth) synth.cancel(); speaking = false; }
 
 /* ---------- game ---------- */
 const stage = () => S.current >= 1 ? C.stages[S.current - 1] : null;
@@ -170,12 +193,12 @@ const limit = () => (S.input === 'code' && stage() && stage().answer) ? stage().
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 let notice = '';
 
-function transmit(arr, then) {
+function transmit(arr, then, clipKey) {
   if (typeTimer) clearInterval(typeTimer);
   lines = arr; typed = 0;
   const total = arr.reduce((n, l) => n + l.length + 1, 0);
   typeTimer = setInterval(() => { typed++; if (typed >= total) clearInterval(typeTimer); render(); }, 45);
-  say(arr, true, () => { typed = 1e9; render(); then && then(); });
+  say(arr, true, () => { typed = 1e9; render(); then && then(); }, clipKey);
 }
 function afterTransmission(s) {
   if (s.await === 'code') { S.input = 'code'; notice = s.keys === 'letters' ? 'ENTER THE WORD' : 'ENTER THE CODE'; }
@@ -185,8 +208,8 @@ function afterTransmission(s) {
 }
 function powerOn() {
   ac(); S.phase = 'booting'; S.deadline = Date.now() + C.minutes * 60000; save();
-  playStatic(0.5, 2); startHum(); render();
-  setTimeout(() => { S.phase = 'receiving'; save(); render(); transmit(C.boot.lines, () => { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; save(); render(); }); }, 2200);
+  playStatic(0.5, 2); startHum(); preload(); render();
+  setTimeout(() => { S.phase = 'receiving'; save(); render(); transmit(C.boot.lines, () => { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; save(); render(); }, 'boot'); }, 2200);
 }
 function press(k) {
   if (!(S.input === 'freq' || S.input === 'code')) return;
@@ -202,26 +225,26 @@ function tune(f) {
   const n = nextStage();
   if (n && n.freq === f) {
     S.current = n.n; S.input = 'none'; notice = 'TUNING ' + pretty(f) + '…'; playTune(); save(); render();
-    setTimeout(() => { playStatic(0.3, 1.2); transmit(n.lines, () => afterTransmission(n)); }, 900);
+    setTimeout(() => { playStatic(0.3, 1.2); transmit(n.lines, () => afterTransmission(n), 's' + n.n); ['s','ok','hint'].forEach(p => loadClip(p + (n.n + 1))); loadClip('ok' + n.n); }, 900);
   } else {
     const old = C.stages.find(s => s.freq === f && s.n <= S.current);
-    if (old) { playTune(); S.input = 'none'; notice = 'REPLAYING ' + pretty(f); render(); transmit(old.lines, () => { if (old.n === S.current) afterTransmission(old); else { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; render(); } }); }
+    if (old) { playTune(); S.input = 'none'; notice = 'REPLAYING ' + pretty(f); render(); transmit(old.lines, () => { if (old.n === S.current) afterTransmission(old); else { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; render(); } }, 's' + old.n); }
     else { playWrong(); notice = 'NO SIGNAL ON ' + pretty(f); }
   }
 }
 function check(code) {
   const s = stage(); if (!s || !s.answer) return;
-  if (code.toUpperCase() === s.answer.toUpperCase()) { playUnlock(); S.input = 'none'; notice = 'ACCEPTED'; render(); transmit(s.success || ['Correct.'], () => { S.input = 'freq'; notice = 'ENTER THE NEXT FREQUENCY'; save(); render(); }); }
+  if (code.toUpperCase() === s.answer.toUpperCase()) { playUnlock(); S.input = 'none'; notice = 'ACCEPTED'; render(); transmit(s.success || ['Correct.'], () => { S.input = 'freq'; notice = 'ENTER THE NEXT FREQUENCY'; save(); render(); }, 'ok' + s.n); }
   else { playWrong(); notice = 'THAT IS NOT IT'; }
 }
-function found() { if (S.input !== 'found') return; S.input = 'none'; playUnlock(); S.phase = 'signoff'; save(); render(); transmit(C.signoff.lines, () => { stopHum(); notice = 'OFF AIR'; save(); render(); }); }
+function found() { if (S.input !== 'found') return; S.input = 'none'; playUnlock(); S.phase = 'signoff'; save(); render(); transmit(C.signoff.lines, () => { stopHum(); notice = 'OFF AIR'; save(); render(); }, 'signoff'); }
 function callMC() {
   if (S.hints <= 0) return; S.hints--; const s = stage();
   const t = s ? s.hint : 'Read the paper in the envelope. The frequency is printed on it.';
   $('hinttext').textContent = t; $('hint').classList.remove('hidden');
-  say(['Mission Control here.', t], false); save(); render();
+  say(['Mission Control here.', t], false, null, 'hint' + (s ? s.n : 0)); save(); render();
 }
-function replay() { if (S.phase === 'receiving' && S.current === 0) { transmit(C.boot.lines); return; } const s = stage(); if (s) transmit(s.lines); }
+function replay() { if (S.phase === 'receiving' && S.current === 0) { transmit(C.boot.lines, null, 'boot'); return; } const s = stage(); if (s) transmit(s.lines, null, 's' + s.n); }
 
 /* ---------- GM ---------- */
 function gmJump(n) { stopSpeaking(); if (typeTimer) clearInterval(typeTimer); S.current = Math.max(0, n - 1); S.phase = 'receiving'; S.input = 'freq'; entry = ''; lines = ['MISSION CONTROL OVERRIDE', 'WAITING FOR ' + pretty(C.stages[n - 1].freq)]; typed = 1e9; notice = 'ENTER A FREQUENCY'; if (!S.deadline) S.deadline = Date.now() + C.minutes * 60000; startHum(); save(); closeGM(); }
