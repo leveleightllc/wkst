@@ -127,18 +127,34 @@ let voice = null;
 function pickVoice() { const vs = synth ? synth.getVoices() : []; voice = vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Alex|Daniel|Aaron|Fred/i.test(v.name)) || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null; }
 if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; }
 let sayToken = 0;
+/* The Signal: each sentence is split into phrases; most sit low and a little unsteady,
+   and every so often one drops into a much lower register. Mission Control is a plain voice. */
+function phrases(line) { return line.match(/[^,.;:?!]+[,.;:?!]*\s*/g) || [line]; }
 function say(arr, asSignal, then) {
   stopSpeaking(); const my = ++sayToken;
   if (muted || !synth) { then && then(); return; }
   speaking = true; render();
+  const units = [];
+  arr.forEach(line => {
+    if (!asSignal) { units.push({ t: line, pitch: 1, rate: 0.95, gap: 200 }); return; }
+    let sinceDrop = 0;
+    phrases(line).forEach((p, i, all) => {
+      sinceDrop++;
+      const drop = sinceDrop >= 2 && Math.random() < 0.35;
+      if (drop) sinceDrop = 0;
+      units.push({ t: p.trim(), pitch: drop ? 0.15 + Math.random() * 0.12 : 0.42 + Math.random() * 0.22, rate: drop ? 0.55 : 0.62, gap: i === all.length - 1 ? 600 : 120 });
+    });
+  });
   let i = 0;
   const next = () => {
     if (my !== sayToken) return;
-    if (i >= arr.length) { speaking = false; render(); then && then(); return; }
-    const u = new SpeechSynthesisUtterance(arr[i++]);
+    if (i >= units.length) { speaking = false; render(); then && then(); return; }
+    const x = units[i++];
+    if (!x.t) { next(); return; }
+    const u = new SpeechSynthesisUtterance(x.t);
     if (voice) u.voice = voice;
-    u.rate = asSignal ? 0.62 : 0.95; u.pitch = asSignal ? 0.45 : 1; u.volume = 1;
-    u.onend = () => setTimeout(next, asSignal ? 550 : 200);
+    u.rate = x.rate; u.pitch = x.pitch; u.volume = 1;
+    u.onend = () => setTimeout(next, x.gap);
     u.onerror = () => setTimeout(next, 100);
     synth.speak(u);
   };
