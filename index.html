@@ -118,7 +118,7 @@ function playTune() { if (muted) return; const a = ac(); const o = a.createOscil
 function playUnlock() { tone(660, 0.18, 0.35); tone(990, 0.35, 0.35, 'sine', 0.18); }
 function playWrong() { tone(110, 0.4, 0.25, 'square'); }
 function playClick() { if (muted) return; const a = ac(); const s = a.createBufferSource(); s.buffer = noiseBuffer(0.05, 0); const g = a.createGain(); g.gain.value = 0.3; s.connect(g).connect(a.destination); s.start(); }
-function startHum() { if (muted || humNode) return; const a = ac(); const o1 = a.createOscillator(); o1.frequency.value = 60; const o2 = a.createOscillator(); o2.frequency.value = 120; const n = a.createBufferSource(); n.buffer = noiseBuffer(4, 0.9); n.loop = true; const g = a.createGain(); g.gain.value = 0.06; const g2 = a.createGain(); g2.gain.value = 0.02; o1.connect(g); o2.connect(g2); n.connect(g2); g.connect(a.destination); g2.connect(a.destination); o1.start(); o2.start(); n.start(); humNode = { stop() { o1.stop(); o2.stop(); n.stop(); } }; }
+function startHum() { if (muted || humNode) return; const a = ac(); const o1 = a.createOscillator(); o1.frequency.value = 110; const o2 = a.createOscillator(); o2.frequency.value = 165; const n = a.createBufferSource(); n.buffer = noiseBuffer(4, 0.97); n.loop = true; const g = a.createGain(); g.gain.value = 0.035; const g2 = a.createGain(); g2.gain.value = 0.015; const g3 = a.createGain(); g3.gain.value = 0.004; o1.connect(g); o2.connect(g2); n.connect(g3); g.connect(a.destination); g2.connect(a.destination); g3.connect(a.destination); o1.start(); o2.start(); n.start(); humNode = { stop() { o1.stop(); o2.stop(); n.stop(); } }; }
 function stopHum() { if (humNode) { try { humNode.stop(); } catch (e) {} humNode = null; } }
 
 /* ---------- speech ---------- */
