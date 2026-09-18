@@ -88,7 +88,7 @@
     <div class="grey"><div style="background:#0d0d0d"></div><div style="background:#262626"></div><div style="background:#404040"></div><div style="background:#595959"></div><div style="background:#808080"></div></div>
     <div id="standby"><h1>PLEASE STAND BY</h1><p>WKST &nbsp;·&nbsp; CHANNEL 13</p><p>OFF THE AIR SINCE OCTOBER 31, 1987</p></div>
     <button id="power">⏻&nbsp; POWER</button>
-    <div id="ver">v5 · 18 Sep</div>
+    <div id="ver">v6 · 18 Sep</div>
   </div>
   <header class="hidden" id="hdr">
     <div class="toprow"><span class="call">WKST 13</span><span class="onair" id="onair">● ON AIR</span><span class="stageno" id="stageno"></span></div>
@@ -264,7 +264,8 @@ function openGM() {
   h += '<p>' + (s ? 'Received: ' + s.n + '. ' + s.title + ' (' + pretty(s.freq) + ')' : (S.phase === 'off' ? 'Not started' : 'Boot message; waiting for the first frequency')) + '</p>';
   if (n) h += '<p>Next frequency expected: ' + pretty(n.freq) + ' (clue ' + n.n + ')</p>';
   h += '<p>Hints left: ' + S.hints + ' · Clock: ' + (clockStarted() ? (S.paused != null ? 'paused at ' : '') + clockText() : 'not started') + '</p><h3>Jump to a clue (the next frequency expected)</h3>';
-  C.stages.forEach(st => { h += '<button data-jump="' + st.n + '">' + st.n + '. ' + st.title + ' — ' + pretty(st.freq) + (st.answer ? '  · code ' + st.answer : '') + '</button>'; });
+  C.stages.forEach(st => { h += '<button data-jump="' + st.n + '">' + st.n + '. ' + st.title + ' — tune ' + pretty(st.freq) + '</button>'; });
+  h += '<h3>Answer key: solving each clue gives…</h3><p>0. Opening → ' + pretty(C.stages[0].freq) + '</p>' + C.stages.map((st, i) => '<p>' + st.n + '. ' + st.title + ' → ' + (C.stages[i + 1] ? pretty(C.stages[i + 1].freq) : 'WE FOUND IT') + '</p>').join('');
   h += '<h3>Fixes</h3><button id="gmskip">Skip the current code</button><button id="gmadd">Add 10 minutes</button><button id="gmpause">' + (S.paused != null ? 'Resume the clock' : 'Pause the clock') + '</button><button id="gmhint">Give back a hint call</button><button id="gmmute">' + (muted ? 'Unmute sound' : 'Mute all sound') + '</button><button id="gmreplay">Replay current transmission</button>';
   h += '<h3>Danger</h3><button class="danger" id="gmreset">Reset the whole game</button>';
   $('gm').innerHTML = h; $('gm').classList.remove('hidden');
