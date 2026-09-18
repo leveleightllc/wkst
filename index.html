@@ -29,14 +29,20 @@
   #ver { position:absolute; left:14px; bottom:10px; font-size:11px; color:rgba(255,255,255,.45); }
   #power { position:absolute; left:50%; bottom:60px; transform:translateX(-50%); background:var(--g); color:#000; border:0; font:inherit; font-weight:bold; font-size:26px; padding:18px 40px; border-radius:6px; }
   /* receiver */
-  header { display:flex; align-items:baseline; gap:14px; padding:22px 28px 10px; }
+  header { display:flex; flex-direction:column; gap:8px; padding:18px 28px 8px; }
+  header .toprow { display:flex; align-items:baseline; gap:14px; }
   header .call { font-size:30px; font-weight:bold; }
   header .onair { font-size:16px; color:#ff3b3b; }
   header .onair.off { color:var(--dim); }
-  header .clock { margin-left:auto; text-align:right; }
-  header .clock small { display:block; font-size:12px; color:var(--dim); }
-  header .clock b { font-size:30px; }
-  header .clock b.low { color:var(--amber); }
+  header .stageno { margin-left:auto; font-size:16px; color:var(--dim); font-weight:600; }
+  .clockbox { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:10px 18px; background:var(--panel); border:2px solid var(--dim); border-radius:10px; }
+  .clockbox.paused { border-color:var(--amber); }
+  .clockbox small { display:block; font-size:13px; color:var(--dim); font-weight:600; }
+  .clockbox.paused small { color:var(--amber); }
+  .clockbox b { display:block; font-size:clamp(44px,7vw,72px); line-height:1.05; font-variant-numeric:tabular-nums; color:var(--dim); }
+  .clockbox.running b { color:var(--g); } .clockbox.running b.low { color:var(--amber); } .clockbox.paused b { color:var(--amber); }
+  #pause { font:inherit; font-weight:bold; font-size:16px; height:48px; padding:0 18px; color:var(--g); background:var(--panel); border:2px solid var(--dim); border-radius:8px; }
+  #pause:disabled { opacity:.35; } .clockbox.paused #pause { background:var(--amber); color:#000; border-color:var(--amber); }
   main { flex:1; display:flex; gap:24px; padding:0 28px 20px; min-height:0; }
   #screen { flex:1; display:flex; flex-direction:column; gap:14px; padding:22px; background:var(--panel); border:2px solid var(--dim); border-radius:10px; min-height:0; }
   #screen .meta { font-size:14px; color:var(--dim); }
@@ -82,11 +88,11 @@
     <div class="grey"><div style="background:#0d0d0d"></div><div style="background:#262626"></div><div style="background:#404040"></div><div style="background:#595959"></div><div style="background:#808080"></div></div>
     <div id="standby"><h1>PLEASE STAND BY</h1><p>WKST &nbsp;·&nbsp; CHANNEL 13</p><p>OFF THE AIR SINCE OCTOBER 31, 1987</p></div>
     <button id="power">⏻&nbsp; POWER</button>
-    <div id="ver">v4 · 16 Sep</div>
+    <div id="ver">v5 · 18 Sep</div>
   </div>
   <header class="hidden" id="hdr">
-    <span class="call">WKST 13</span><span class="onair" id="onair">● ON AIR</span>
-    <div class="clock"><small>SIGN-OFF IN</small><b id="clock">60:00</b></div>
+    <div class="toprow"><span class="call">WKST 13</span><span class="onair" id="onair">● ON AIR</span><span class="stageno" id="stageno"></span></div>
+    <div class="clockbox" id="clockbox"><div><small id="clocklab">CLOCK STARTS AT THE FIRST FREQUENCY</small><b id="clock">60:00</b></div><button id="pause" disabled>❚❚&nbsp; PAUSE</button></div>
   </header>
   <main class="hidden" id="main">
     <section id="screen"><div class="meta" id="meta">INCOMING</div><div id="lines"></div><div id="notice"></div></section>
@@ -102,12 +108,13 @@
 </div>
 <div id="gm" class="hidden"></div>
 <div id="hint" class="hidden"><h3>MISSION CONTROL</h3><p id="hinttext"></p><button id="hintok">COPY THAT</button></div>
-<script id="content" type="application/json">{"station": "WKST", "channel": "13", "offAir": "October 31, 1987", "kids": {"lead": "Ian", "spotter": "Bryn", "spotterAge": 5}, "boot": {"lines": ["This is WKST. Channel thirteen.", "We went off the air on October thirty-first, nineteen eighty-seven, for reasons that cannot and will not ever be disclosed. You\u2019re safer that way.", "Last night, at three thirteen in the morning, we came back on.", "Nobody is at the station.", "We are broadcasting to one house. If you are the residents of 400 Salem Avenue, SW, in Roanoke, Virginia, and you live in Loft 2K, these messages are for you.", "You have been chosen to solve a series of puzzles. If you succeed, there will be a spectacular prize. If you fail, well... you will not like the consequences.", "You will have 60 minutes to accomplish all of my tasks. The clock has already started.", "Every task you complete will lead you to a new frequency, to ensure that nobody else on earth has access to these clues.", "The first clue is on the paper in front of you."]}, "stages": [{"n": 1, "freq": "881", "title": "The cold key", "card": "CASE FILE", "envelope": "Envelope 1", "lines": ["Eighty-eight point one. Good. You can hear me.", "I put the first key where it is coldest.", "Where the ice cream sleeps.", "You will need something warm to get it out.", "The next frequency is behind the lock."], "cardText": ["I put the first key where it is coldest.", "Where the ice cream sleeps.", "You will need something warm to get it out."], "await": "freq", "hint": "Where does the ice cream live? And what melts ice?"}, {"n": 2, "freq": "903", "title": "The empty page", "card": "CLUE 2", "envelope": "supply pouch", "lines": ["Ninety point three.", "That page is not empty.", "I do not write in ink you can see.", "There is a light on the pen."], "cardText": ["This page looks empty.", "I do not write in ink you can see."], "await": "freq", "hint": "What is on the cap of that pen? Shine it on the page."}, {"n": 3, "freq": "917", "title": "The torn picture", "card": "CLUE 3", "envelope": "two bags under the couch", "lines": ["Ninety-one point seven.", "I tore the picture. Match the shapes to put it back.", "Then count. I always count. Every one.", "Enter the four numbers here."], "cardText": ["I tore the picture. Match the shapes to put it back together.", "Then count. I always count. Every one."], "await": "code", "answer": "3142", "keys": "digits", "success": ["Correct.", "The lock on the bag will open now.", "The next frequency is inside."], "hint": "Which box says first? How many apples are in it?"}, {"n": 4, "freq": "925", "title": "The picture", "card": "CLUE 4", "envelope": "inside the backpack", "lines": ["Ninety-two point five.", "I drew you a picture.", "Finish it, and you will know where I went."], "cardText": ["I drew you a picture.", "Finish it, and you will know where I went."], "await": "freq", "hint": "What has a faucet and feet?"}, {"n": 5, "freq": "941", "title": "The way I see", "card": "CLUE 5", "envelope": "bathroom counter", "lines": ["Ninety-four point one.", "I write the way I see.", "Find the thing in that room that sees the way I do."], "cardText": ["I write the way I see.", "Find the thing in this room that sees the way I do."], "await": "freq", "hint": "The writing is backwards. What in that room flips things around?"}, {"n": 6, "freq": "958", "title": "My mistakes", "card": "CLUE 6", "envelope": "Envelope 2, under the kitchen table", "lines": ["Ninety-five point eight.", "I copied four pictures from the station wall.", "I am not good at it.", "Count my mistakes. Enter the four numbers."], "cardText": ["I copied four pictures from the station wall. I am not good at it.", "Count my mistakes."], "await": "code", "answer": "2314", "keys": "digits", "success": ["Correct.", "Open the second bag."], "hint": "Look at the third picture in row one. Is it the same on top and bottom?"}, {"n": 7, "freq": "966", "title": "The word", "card": "CLUE 7", "envelope": "inside bag B", "lines": ["Ninety-six point six.", "The operator with the envelope knows a word.", "Prove you know it too. Enter the word."], "cardText": ["The operator with the envelope knows a word.", "Prove you know it too."], "await": "code", "answer": "TREAT", "keys": "letters", "success": ["Correct.", "Now say it to her. Out loud.", "She is listening."], "hint": "What sound does tiger start with? Write that letter first."}, {"n": 8, "freq": "979", "title": "Five keys", "card": "CLUE 8", "envelope": "Envelope 3, from Operator R", "lines": ["Ninety-seven point nine.", "Five keys. Four are mine. One is yours.", "Follow the pattern."], "cardText": ["Five keys. Four are mine. One is yours.", "Follow the pattern."], "await": "freq", "hint": "Say the shapes out loud. Star, circle, triangle, star, circle, triangle, star, circle..."}, {"n": 9, "freq": "985", "title": "The wire room", "card": "CLUE 9", "envelope": "inside the wire-room door", "lines": ["Ninety-eight point five.", "The red wires are live.", "Touch one, and I will know you are here.", "Cross quietly.", "My balloons are waiting at the end. They remember everything."], "cardText": ["The red wires are live. Touch one, and I will know you are here.", "Cross quietly.", "My balloons are waiting at the end. They remember everything."], "await": "freq", "hint": "No hint for this one. Go slowly. Try again if you touch."}, {"n": 10, "freq": "991", "title": "Things I know", "card": "CLUE 10", "envelope": "inside the balloons", "lines": ["Ninety-nine point one.", "I know things about you.", "I know how old Bryn is.", "I know how many legs a dog has.", "I know how many wheels are on a bicycle.", "Prove you know them too. Enter the three numbers."], "cardText": ["I know things about you. Prove you know them too.", "How old is Bryn?", "How many legs does a dog have?", "How many wheels does a bicycle have?"], "await": "code", "answer": "542", "keys": "digits", "success": ["Correct.", "The vault will open now.", "Go and look."], "hint": "How old are you, Bryn? Count the legs on a stuffed animal."}, {"n": 11, "freq": "999", "title": "My face", "card": "CLUE 11", "envelope": "inside the vault", "lines": ["Ninety-nine point nine. The last one.", "You found the vault. It is empty.", "I moved everything before you came.", "I wrote down where. Not in ink you can see.", "Take the light.", "Look at my face. On the wall."], "cardText": ["You found the vault. It is empty.", "I moved everything before you came.", "I wrote down where, but not in ink you can see.", "Take the light. Look at my face. On the wall."], "await": "found", "hint": "Whose face is on the wall? Turn the lights down and shine the light closer."}], "signoff": {"lines": ["You found it.", "You found all eleven.", "Nobody has ever found all eleven.", "This is WKST. Channel thirteen. Signing off.", "Good night, Operators.", "I will be counting the days."]}, "hintsTotal": 3, "minutes": 60}</script>
+<script id="content" type="application/json">{"station": "WKST", "channel": "13", "offAir": "October 31, 1987", "kids": {"lead": "Ian", "spotter": "Bryn", "spotterAge": 5}, "boot": {"lines": ["This is WKST. Channel thirteen.", "We went off the air on October thirty-first, nineteen eighty-seven, for reasons that cannot ever be disclosed. You\u2019re safer that way.", "Last night, at three thirteen in the morning, we came back on.", "Nobody is at the station. No human is in control.", "We are broadcasting to one house. If you are the residents of 400 Salem Avenue, Southwest, in Roanoke, Virginia, and you are in Loft 2K, these messages are for you.", "You have been chosen to solve a series of puzzles. If you succeed, you will be pleased with the results. If you fail, the world itself may be in peril.", "You will have 60 minutes to accomplish all of my tasks. The clock will start when you enter the first frequency.", "Every task you complete will lead you to a new frequency, to ensure that nobody else on earth has access to these powerful and dangerous clues.", "You will have to work together to solve these puzzles. No one person can do it alone.", "To prove you are not imposters, the first frequency is something only you would know: If one of you is in first grade, enter the numbers 99.9. If one of you is NOT in first grade, enter the month and day of the birth of someone in the room with red hair."]}, "stages": [{"n": 1, "freq": "0411", "title": "Cold as ice", "await": "freq", "lines": ["Zero four point one one. Good. If you can hear me, you are one step closer to saving the world.", "To succeed in this game, you will need to be as COLD AS ICE.", "If Peter were here, you could ask him what you need to find the next frequency.", "Look for something out of the ordinary.", "When you have the item that is out of the ordinary, use it to unlock the next frequency.", "The next frequency is behind the lock. Where is the lock, you may ask? It\u2019s hiding in plain sight. Don\u2019t worry. You\u2019ve got this. It\u2019s... in the bag."], "hint": "Where does the ice cream live? And what melts ice?"}, {"n": 2, "freq": "0123", "title": "Feet up", "await": "freq", "lines": ["After solving the first puzzle, you deserve a rest. Put your feet up.", "Oh, wait. If you put your feet up, you won\u2019t be able to get to the second clue.", "Where could it be?"], "hint": "Can you find a purple pen? What is on the cap of that pen? Shine it on the page."}, {"n": 3, "freq": "0612", "title": "Plunder the dead", "await": "freq", "lines": ["Mark Twain once said that history never repeats itself, but it always RHYMES.", "To find the next frequency... PLUNDER THE DEAD."], "hint": "What rhymes with PLUNDER THE DEAD?"}, {"n": 4, "freq": "0716", "title": "Dad is awesome", "await": "freq", "lines": ["To find the next frequency, you must remember one very important thing: YOUR DAD IS AWESOME.", "So is Bluey and Bingo\u2019s dad."], "hint": "What did you give your father for Father\u2019s Day?"}, {"n": 5, "freq": "0521", "title": "Mill Mountain", "await": "freq", "lines": ["Roanoke, Virginia is an energy point for the universe.", "On Mill Mountain, at night, the energy takes a very specific shape.", "Figure out that shape and you\u2019re halfway to solving the puzzle. The shape is the key.", "It would be helpful if you knew someone who has lived in Roanoke for nearly all of their life. Do you? Perhaps you can phone a friend.", "You\u2019ll still need something special that turns letters into numbers. Have you run across anything like that?"], "hint": "Your father can help."}, {"n": 6, "freq": "0725", "title": "Eight by eight", "await": "freq", "lines": ["The game is afoot!", "On an eight by eight field, black and white have a fight.", "Pink allows you to get numbers right.", "Their order, however, is hard to say.", "But what does your dad brew every day?"], "hint": "The chess pieces hold the key. Enter their starting rank from left to right."}, {"n": 7, "freq": "1278", "title": "Gymnastics day", "await": "freq", "lines": ["You\u2019ve gotten this far. I\u2019m impressed.", "The next frequency is a number you know.", "The lock is attached to something you travel with. But what\u2019s the code?", "The code is the day we did gymnastics. It\u2019s also special for another reason. Go unlock it!"], "hint": "It\u2019s Bryn\u2019s birthday!"}, {"n": 8, "freq": "0519", "title": "The blue key", "await": "freq", "lines": ["The next frequency can be found behind the blue key. You do have the blue key, don\u2019t you?", "If you don\u2019t, look for it behind a picture that has to be fake."], "hint": "Kids! In! Space!"}, {"n": 9, "freq": "1111", "title": "Emergency", "await": "found", "lines": ["The clock is running quickly. This is your last puzzle. Will you finish in time?", "The lockbox has been in plain sight all along. But what\u2019s the code?", "WHAT? IS? THE? CODE?", "This is obviously an emergency."], "hint": "Who do you call in an emergency? Those numbers open the lockbox."}], "signoff": {"lines": ["You found it.", "You found ALL of the clues. You solved ALL of the puzzles.", "Nobody has EVER found all of the clues.", "This is WKST. Channel thirteen. Signing off.", "Good night, Operators. You have saved the world.", "For now..."]}, "defaultHint": "Listen to the opening again. The first frequency is the month and day of a birthday. Whose?", "hintsTotal": 3, "minutes": 60}</script>
 <script>
 const C = JSON.parse(document.getElementById('content').textContent);
 const $ = id => document.getElementById(id);
 const KEY = 'wkst.state.v1';
-let S = { phase:'off', current:0, input:'none', hints:C.hintsTotal, deadline:null };
+let S = { phase:'off', current:0, input:'none', hints:C.hintsTotal, deadline:null, paused:null };
+const FREQLEN = Math.max(...C.stages.map(s => s.freq.length));
 let entry = '', lines = [], typed = 0, typeTimer = null, speaking = false, muted = false;
 
 /* ---------- audio ---------- */
@@ -136,7 +143,7 @@ async function loadClip(key) {
     CLIPS[key] = buf; return buf;
   } catch (e) { CLIPS[key] = null; return null; }
 }
-function preload() { ['boot','s1','s2','s3','ok3','s4','hint0','hint1','hint2','hint3'].forEach(loadClip); }
+function preload() { ['boot','s1','s2','s3','hint0','hint1','hint2','hint3'].forEach(loadClip); }
 const synth = window.speechSynthesis;
 let voice = null;
 function pickVoice() { const vs = synth ? synth.getVoices() : []; voice = vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Alex|Daniel|Aaron|Fred/i.test(v.name)) || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null; }
@@ -188,8 +195,9 @@ function stopSpeaking() { sayToken++; if (clipSrc) { try { clipSrc.onended = nul
 /* ---------- game ---------- */
 const stage = () => S.current >= 1 ? C.stages[S.current - 1] : null;
 const nextStage = () => S.current < C.stages.length ? C.stages[S.current] : null;
-const pretty = f => f.slice(0, 2) + '.' + f.slice(2);
-const limit = () => (S.input === 'code' && stage() && stage().answer) ? stage().answer.length : 3;
+const pretty = f => f.length > 2 ? f.slice(0, 2) + '.' + f.slice(2) : f;
+const clockStarted = () => S.deadline != null || S.paused != null;
+const limit = () => (S.input === 'code' && stage() && stage().answer) ? stage().answer.length : FREQLEN;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 let notice = '';
 
@@ -207,7 +215,7 @@ function afterTransmission(s) {
   save(); render();
 }
 function powerOn() {
-  ac(); S.phase = 'booting'; S.deadline = Date.now() + C.minutes * 60000; save();
+  ac(); S.phase = 'booting'; save();
   playStatic(0.5, 2); startHum(); preload(); render();
   setTimeout(() => { S.phase = 'receiving'; save(); render(); transmit(C.boot.lines, () => { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; save(); render(); }, 'boot'); }, 2200);
 }
@@ -215,7 +223,7 @@ function press(k) {
   if (!(S.input === 'freq' || S.input === 'code')) return;
   playClick();
   if (k === '⌫') { entry = entry.slice(0, -1); render(); return; }
-  if (k === 'GO') { submit(); return; }
+  if (k === 'GO') { if (entry.length >= 3) submit(); return; }
   if (entry.length >= limit()) return;
   entry += k; render();
   if (entry.length === limit()) submit();
@@ -224,8 +232,8 @@ function submit() { const e = entry; entry = ''; if (S.input === 'freq') tune(e)
 function tune(f) {
   const n = nextStage();
   if (n && n.freq === f) {
-    S.current = n.n; S.input = 'none'; notice = 'TUNING ' + pretty(f) + '…'; playTune(); save(); render();
-    setTimeout(() => { playStatic(0.3, 1.2); transmit(n.lines, () => afterTransmission(n), 's' + n.n); ['s','ok','hint'].forEach(p => loadClip(p + (n.n + 1))); loadClip('ok' + n.n); }, 900);
+    S.current = n.n; if (!clockStarted()) S.deadline = Date.now() + C.minutes * 60000; S.input = 'none'; notice = 'TUNING ' + pretty(f) + '…'; playTune(); save(); render();
+    setTimeout(() => { playStatic(0.3, 1.2); transmit(n.lines, () => afterTransmission(n), 's' + n.n); ['s','hint'].forEach(p => loadClip(p + (n.n + 1))); }, 900);
   } else {
     const old = C.stages.find(s => s.freq === f && s.n <= S.current);
     if (old) { playTune(); S.input = 'none'; notice = 'REPLAYING ' + pretty(f); render(); transmit(old.lines, () => { if (old.n === S.current) afterTransmission(old); else { S.input = 'freq'; notice = 'ENTER A FREQUENCY'; render(); } }, 's' + old.n); }
@@ -240,29 +248,31 @@ function check(code) {
 function found() { if (S.input !== 'found') return; S.input = 'none'; playUnlock(); S.phase = 'signoff'; save(); render(); transmit(C.signoff.lines, () => { stopHum(); notice = 'OFF AIR'; save(); render(); }, 'signoff'); }
 function callMC() {
   if (S.hints <= 0) return; S.hints--; const s = stage();
-  const t = s ? s.hint : 'Read the paper in the envelope. The frequency is printed on it.';
+  const t = s ? s.hint : (C.defaultHint || 'Listen to the opening again.');
   $('hinttext').textContent = t; $('hint').classList.remove('hidden');
   say(['Mission Control here.', t], false, null, 'hint' + (s ? s.n : 0)); save(); render();
 }
 function replay() { if (S.phase === 'receiving' && S.current === 0) { transmit(C.boot.lines, null, 'boot'); return; } const s = stage(); if (s) transmit(s.lines, null, 's' + s.n); }
 
 /* ---------- GM ---------- */
-function gmJump(n) { stopSpeaking(); if (typeTimer) clearInterval(typeTimer); S.current = Math.max(0, n - 1); S.phase = 'receiving'; S.input = 'freq'; entry = ''; lines = ['MISSION CONTROL OVERRIDE', 'WAITING FOR ' + pretty(C.stages[n - 1].freq)]; typed = 1e9; notice = 'ENTER A FREQUENCY'; if (!S.deadline) S.deadline = Date.now() + C.minutes * 60000; startHum(); save(); closeGM(); }
-function gmReset() { stopSpeaking(); stopHum(); if (typeTimer) clearInterval(typeTimer); S = { phase:'off', current:0, input:'none', hints:C.hintsTotal, deadline:null }; entry = ''; lines = []; typed = 0; notice = ''; try { localStorage.removeItem(KEY); } catch (e) {} closeGM(); }
+function gmJump(n) { stopSpeaking(); if (typeTimer) clearInterval(typeTimer); S.current = Math.max(0, n - 1); S.phase = 'receiving'; S.input = 'freq'; entry = ''; lines = ['MISSION CONTROL OVERRIDE', 'WAITING FOR ' + pretty(C.stages[n - 1].freq)]; typed = 1e9; notice = 'ENTER A FREQUENCY'; if (!clockStarted() && n > 1) S.deadline = Date.now() + C.minutes * 60000; startHum(); save(); closeGM(); }
+function togglePause() { if (!clockStarted() || S.phase === 'signoff') return; if (S.paused != null) { S.deadline = Date.now() + S.paused; S.paused = null; } else { S.paused = Math.max(0, S.deadline - Date.now()); S.deadline = null; } playClick(); save(); render(); }
+function gmReset() { stopSpeaking(); stopHum(); if (typeTimer) clearInterval(typeTimer); S = { phase:'off', current:0, input:'none', hints:C.hintsTotal, deadline:null, paused:null }; entry = ''; lines = []; typed = 0; notice = ''; try { localStorage.removeItem(KEY); } catch (e) {} closeGM(); }
 function openGM() {
   const s = stage(), n = nextStage();
   let h = '<button class="done" id="gmdone">Done</button><h2>Mission Control</h2><h3>Where the game is</h3>';
   h += '<p>' + (s ? 'Received: ' + s.n + '. ' + s.title + ' (' + pretty(s.freq) + ')' : (S.phase === 'off' ? 'Not started' : 'Boot message; waiting for the first frequency')) + '</p>';
   if (n) h += '<p>Next frequency expected: ' + pretty(n.freq) + ' (clue ' + n.n + ')</p>';
-  h += '<p>Hints left: ' + S.hints + ' · Time left: ' + clockText() + '</p><h3>Jump to a clue (the next frequency expected)</h3>';
+  h += '<p>Hints left: ' + S.hints + ' · Clock: ' + (clockStarted() ? (S.paused != null ? 'paused at ' : '') + clockText() : 'not started') + '</p><h3>Jump to a clue (the next frequency expected)</h3>';
   C.stages.forEach(st => { h += '<button data-jump="' + st.n + '">' + st.n + '. ' + st.title + ' — ' + pretty(st.freq) + (st.answer ? '  · code ' + st.answer : '') + '</button>'; });
-  h += '<h3>Fixes</h3><button id="gmskip">Skip the current code</button><button id="gmadd">Add 10 minutes</button><button id="gmhint">Give back a hint call</button><button id="gmmute">' + (muted ? 'Unmute sound' : 'Mute all sound') + '</button><button id="gmreplay">Replay current transmission</button>';
+  h += '<h3>Fixes</h3><button id="gmskip">Skip the current code</button><button id="gmadd">Add 10 minutes</button><button id="gmpause">' + (S.paused != null ? 'Resume the clock' : 'Pause the clock') + '</button><button id="gmhint">Give back a hint call</button><button id="gmmute">' + (muted ? 'Unmute sound' : 'Mute all sound') + '</button><button id="gmreplay">Replay current transmission</button>';
   h += '<h3>Danger</h3><button class="danger" id="gmreset">Reset the whole game</button>';
   $('gm').innerHTML = h; $('gm').classList.remove('hidden');
   $('gmdone').onclick = closeGM;
   document.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => gmJump(+b.dataset.jump));
   $('gmskip').onclick = () => { const st = stage(); if (S.input === 'code' && st) { check(st.answer); } closeGM(); };
-  $('gmadd').onclick = () => { S.deadline = (S.deadline || Date.now()) + 600000; save(); render(); closeGM(); };
+  $('gmadd').onclick = () => { if (S.paused != null) S.paused += 600000; else S.deadline = (S.deadline || Date.now()) + 600000; save(); render(); closeGM(); };
+  $('gmpause').onclick = () => { togglePause(); closeGM(); };
   $('gmhint').onclick = () => { S.hints = Math.min(C.hintsTotal, S.hints + 1); save(); render(); closeGM(); };
   $('gmmute').onclick = () => { muted = !muted; if (muted) { stopSpeaking(); stopHum(); } else startHum(); closeGM(); };
   $('gmreplay').onclick = () => { replay(); closeGM(); };
@@ -271,7 +281,7 @@ function openGM() {
 function closeGM() { $('gm').classList.add('hidden'); render(); }
 
 /* ---------- render ---------- */
-function clockText() { const t = Math.max(0, Math.round(((S.deadline || Date.now()) - Date.now()) / 1000)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+function clockText() { const ms = S.paused != null ? S.paused : (S.deadline != null ? S.deadline - Date.now() : C.minutes * 60000); const t = Math.max(0, Math.round(ms / 1000)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
 function render() {
   const on = S.phase === 'receiving' || S.phase === 'signoff';
   $('boot').classList.toggle('hidden', S.phase !== 'off');
@@ -280,7 +290,9 @@ function render() {
   if (!on) return;
   $('onair').textContent = S.phase === 'signoff' ? 'OFF AIR' : '● ON AIR'; $('onair').classList.toggle('off', S.phase === 'signoff');
   const s = stage();
-  $('meta').textContent = S.phase === 'signoff' ? 'FINAL TRANSMISSION' : (s ? 'FREQ ' + pretty(s.freq) + '  ·  ' + s.n + ' OF ' + C.stages.length : 'INCOMING');
+  $('meta').textContent = S.phase === 'signoff' ? 'FINAL TRANSMISSION' : (s ? 'FREQ ' + pretty(s.freq) : 'INCOMING');
+  $('stageno').textContent = (s && S.phase !== 'signoff') ? s.n + ' OF ' + C.stages.length : '';
+  renderClock();
   let left = typed, html = '';
   for (const l of lines) { if (left <= 0) break; if (left >= l.length + 1) { html += '<p>' + esc(l) + '</p>'; left -= l.length + 1; } else { html += '<p>' + esc(l.slice(0, left)) + '</p>'; left = 0; } }
   if (speaking) html += '<p>▮</p>';
@@ -289,7 +301,7 @@ function render() {
   const active = S.input === 'freq' || S.input === 'code';
   $('entry').classList.toggle('idle', !active); $('entrylab').textContent = S.input === 'code' ? 'CODE' : 'FREQ';
   const lim = limit(); let slots = '';
-  for (let i = 0; i < lim; i++) { slots += (entry[i] || '_') + (S.input !== 'code' && i === 1 ? '.' : ' '); }
+  for (let i = 0; i < lim; i++) { slots += (entry[i] || '_') + (S.input !== 'code' && i === 1 && lim > 2 ? '.' : ' '); }
   $('slots').textContent = slots.trim();
   const letters = S.input === 'code' && s && s.keys === 'letters';
   const keys = letters ? ['A','B','E','G','I','N','O','P','R','S','T','⌫'] : ['1','2','3','4','5','6','7','8','9','⌫','0','GO'];
@@ -301,12 +313,13 @@ function render() {
   $('call').textContent = S.hints > 0 ? 'CALL MISSION CONTROL (' + S.hints + ')' : 'NO CALLS LEFT'; $('call').disabled = S.hints === 0;
 }
 function esc(t) { return t.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c])); }
-setInterval(() => { if (S.phase === 'receiving' || S.phase === 'signoff') { const c = $('clock'); c.textContent = clockText(); c.classList.toggle('low', (S.deadline || 0) - Date.now() < 300000); } }, 1000);
+function renderClock() { const box = $('clockbox'), c = $('clock'); c.textContent = clockText(); const started = clockStarted(), paused = S.paused != null; box.classList.toggle('running', started && !paused); box.classList.toggle('paused', paused); c.classList.toggle('low', started && !paused && (S.deadline - Date.now()) < 300000); $('clocklab').textContent = !started ? 'CLOCK STARTS AT THE FIRST FREQUENCY' : (paused ? 'CLOCK PAUSED' : 'TIME TO SIGN-OFF'); $('pause').disabled = !started || S.phase === 'signoff'; $('pause').innerHTML = paused ? '▶&nbsp; RESUME' : '❚❚&nbsp; PAUSE'; }
+setInterval(() => { if (S.phase === 'receiving' || S.phase === 'signoff') renderClock(); }, 1000);
 
 /* ---------- wire up ---------- */
 $('power').onclick = powerOn;
 $('pad').addEventListener('click', e => { const b = e.target.closest('button'); if (b) press(b.dataset.k); });
-$('found').onclick = found; $('replay').onclick = () => { ac(); replay(); }; $('call').onclick = () => { ac(); callMC(); };
+$('found').onclick = found; $('pause').onclick = () => { ac(); togglePause(); }; $('replay').onclick = () => { ac(); replay(); }; $('call').onclick = () => { ac(); callMC(); };
 $('hintok').onclick = () => $('hint').classList.add('hidden');
 let holdT = null;
 const door = $('gmdoor');
